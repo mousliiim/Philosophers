@@ -1,6 +1,6 @@
 NAME			=	philo
 
-SRCS			=	src/main.c
+SRCS			=	src/main.c src/utils.c
 
 # Colors
 DEF_COLOR = \033[0;39m
@@ -9,7 +9,7 @@ PURPLE= \033[38;2;255;105;180m
 
 OBJS			=	${SRCS:.c=.o}
 
-CFLAGS			=	-Wall -Werror -Wextra -pthread
+CFLAGS			=	-Wall -Werror -Wextra -g3 -pthread
 
 all				:	${NAME}
 
