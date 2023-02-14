@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:30:57 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/14 06:51:45 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/14 11:55:07 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,9 +47,6 @@ void	ft_init_info(t_info *info, int argc, char **argv)
 		info->need_eat = 0;
 }
 
-// Ajouter un mutex pour chaque printf pour eviter les conflits d'ecriture entre les threads dans la structure t_philo
-// Ajouter un mutex aussi pour chaque gettime pour eviter les conflits d'ecriture entre les threads dans la structure t_philo
-
 void    mutex_fork(t_philo *philo)
 {
 	t_info		*info;
@@ -80,7 +77,7 @@ void	*ft_routine(void *data)
 
 	info = starton();
 	philo = (t_philo *)data;
-	if (philo->nb_philo == 1)
+	if (info->nb_philo == 1)
 	{
 		printf("%ld %d has taken a fork\n", (gettime() - info->time_start), philo->id);
 		usleep_(info->limit_die);
@@ -121,49 +118,51 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 
 	i = 0;
 	if (!ft_parsing(argv))
+	{
+		free(philo);
 		exit(0);
+	}
 	ft_init_info(info, argc, argv);
-	philo->nb_philo = ft_atoi(argv[1]);
+	info->nb_philo = ft_atoi(argv[1]);
 	i = 0;
-	while (i < philo->nb_philo - 1)
+	while (i < info->nb_philo - 1)
 	{
 		philo[i].fork_right = &philo[i + 1].fork_left;
 		i++;
 	}
 	philo[i].fork_right = &philo[0].fork_left;
 	i = 0;
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
-		philo[i].nb_philo = ft_atoi(argv[1]);
 		philo[i].id = i + 1;
 		i++;
 	}
 	// ft_display(philo, info);
 	i = 0;
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
 		pthread_mutex_init(&philo[i].fork_left, NULL);
 		i++;
 	}
 	pthread_mutex_init(&info->print, NULL);
-	pthread_mutex_init(&info->time, NULL);
 	i = 0;
 	info->time_start = gettime();
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
 		pthread_create(&philo[i].tid, NULL, ft_routine, &philo[i]);
 		i++;
 	}
 	i = 0;
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
 		pthread_join(philo[i].tid, NULL);
 		i++;
 	}
 	i = 0;
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
 		pthread_mutex_destroy(&philo[i].fork_left);
+		pthread_mutex_destroy(&info->print);
 		i++;
 	}
 
@@ -181,6 +180,7 @@ int	main(int argc, char **argv)
 		if (!philo || !info)
 			return (0);
 		ft_init_philo(philo, info, argv, argc);
+		free(philo);
 	}
 	else
 	{

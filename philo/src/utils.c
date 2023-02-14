@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/09 19:54:21 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/13 21:49:28 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/14 10:18:15 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,9 +28,13 @@ int	ft_parsing(char **argv)
 		}
 		while (argv[i][j])
 		{
-			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j]) || (argv[i][0] == '+' && argv[i][1] == '+') || (argv[i][0] == '+' && argv[i][1] == '\0'))
+			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j], 2) ||
+				(argv[i][0] == '+' && argv[i][1] == '\0') ||
+				(argv[i][0] == '+' && argv[i][1] == '+') ||
+				(argv[i][0] == '+' && ft_isdigit(argv[i][j], 1) &&
+				argv[i][j + 1] == '+') || (ft_isdigit(argv[i][0], 1) && argv[i][1] == '+'))
 			{
-				write(2, "Error: Argument must be a positif number !\n", 43);
+				write(2, "Error: Need correct argument [Positif Number]!\n", 47);
 				return (0);
 			}
 			j++;
@@ -69,7 +73,7 @@ void	ft_display(t_philo *philo, t_info *info)
 
 	i = 0;
 	printf("\n");
-	while (i < philo->nb_philo)
+	while (i < info->nb_philo)
 	{
 		printf("****************************\n");
 		printf("Philo Number for philo[%d] is : %d\n", i, philo[i].id);
@@ -78,19 +82,27 @@ void	ft_display(t_philo *philo, t_info *info)
 	}
 	printf("%s*******************************%s", BRED, END);
 	printf("\n\t%s   Info ⏱️:%s\n\n", BRED, END);
-	printf("%sNb of Philo : %d%s\n", BRED, philo->nb_philo, END);
+	printf("%sNb of Philo : %d%s\n", BRED, info->nb_philo, END);
 	printf("%sLimit to Die : %ld Ms%s\n", BRED, info->limit_die, END);
 	printf("%sLimit to Eat : %ld Ms%s\n", BRED, info->eat_time, END);
 	printf("%sLimit Sleep Time : %ld Ms%s\n", BRED, info->sleep_time, END);
 	printf("%sPhilo[s] need to eat : %d Time[s]%s\n", BRED, info->need_eat, END);
-	printf("%sFork total on the table : %d%s\n", BRED, philo->nb_philo, END);
+	printf("%sFork total on the table : %d%s\n", BRED, info->nb_philo, END);
 	printf("%s\n*******************************\n%s", BRED, END);
 }
 
-int	ft_isdigit(int c)
+int	ft_isdigit(int c, int param)
 {
-	if ((c >= '0' && c <= '9') || c == '-' || c == '+')
-		return (1);
+	if (param == 1)
+	{
+		if (c >= '0' && c <= '9')
+			return (1);
+	}
+	else
+	{
+		if ((c >= '0' && c <= '9') || c == '+')
+			return (1);
+	}
 	return (0);
 }
 
