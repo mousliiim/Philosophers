@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:32:40 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/13 05:53:45 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/14 06:16:47 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,8 @@ typedef struct s_info
 	long int	eat_time;
 	long int	sleep_time;
 	int			need_eat;
+	pthread_mutex_t	print;
+	pthread_mutex_t	time;
 }	t_info;
 
 int			ft_atoi(const char *nptr);

@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/09 19:54:21 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/13 01:50:36 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/13 21:49:28 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,14 @@ int	ft_parsing(char **argv)
 	while (argv[i])
 	{
 		j = 0;
+		if (argv[i][0] == '\0')
+		{
+			write(2, "Error: Argument not be empty !\n", 31);
+			return (0);
+		}
 		while (argv[i][j])
 		{
-			if (argv[i][j] < '0' || argv[i][j] > '9')
+			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j]) || (argv[i][0] == '+' && argv[i][1] == '+') || (argv[i][0] == '+' && argv[i][1] == '\0'))
 			{
 				write(2, "Error: Argument must be a positif number !\n", 43);
 				return (0);
@@ -84,7 +89,7 @@ void	ft_display(t_philo *philo, t_info *info)
 
 int	ft_isdigit(int c)
 {
-	if (c >= '0' && c <= '9')
+	if ((c >= '0' && c <= '9') || c == '-' || c == '+')
 		return (1);
 	return (0);
 }

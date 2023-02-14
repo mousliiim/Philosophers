@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:30:57 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/13 05:53:50 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/14 06:51:45 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,29 @@ void	ft_init_info(t_info *info, int argc, char **argv)
 // Ajouter un mutex pour chaque printf pour eviter les conflits d'ecriture entre les threads dans la structure t_philo
 // Ajouter un mutex aussi pour chaque gettime pour eviter les conflits d'ecriture entre les threads dans la structure t_philo
 
+void    mutex_fork(t_philo *philo)
+{
+	t_info		*info;
+
+	info = starton();
+	if (philo->id % 2)
+		pthread_mutex_lock(&philo->fork_left);
+	else
+		pthread_mutex_lock(philo->fork_right);
+	pthread_mutex_lock(&info->print);
+	printf("%ld %d has take a fork\n",
+		(gettime() - info->time_start), philo->id);
+	pthread_mutex_unlock(&info->print);
+	if (philo->id % 2)
+		pthread_mutex_lock(philo->fork_right);
+	else
+		pthread_mutex_lock(&philo->fork_left);
+	pthread_mutex_lock(&info->print);
+	printf("%ld %d has take a fork\n",
+		(gettime() - info->time_start), philo->id);
+	pthread_mutex_unlock(&info->print);
+}
+
 void	*ft_routine(void *data)
 {
 	t_philo		*philo;
@@ -68,19 +91,26 @@ void	*ft_routine(void *data)
 		usleep_(info->eat_time);
 	while (TRUE)
 	{
-		philo->count = 0;
-		pthread_mutex_lock(&philo->fork_left);
-		printf("%ld %d has taken a fork\n", (gettime() - info->time_start), philo->id);
-		pthread_mutex_lock(philo->fork_right);
-		printf("%ld %d has taken a fork\n", (gettime() - info->time_start), philo->id);
+		if (philo->id % 2)
+		{
+			if (info->eat_time > info->sleep_time)
+				usleep(info->eat_time - info->sleep_time);
+			usleep(500);
+		}
+		mutex_fork(philo);
+		pthread_mutex_lock(&info->print);
 		printf("%ld %d is eating\n", (gettime() - info->time_start), philo->id);
-		philo->last_eat = gettime() - info->time_start;
+		pthread_mutex_unlock(&info->print);
 		usleep_(info->eat_time);
 		pthread_mutex_unlock(philo->fork_right);
 		pthread_mutex_unlock(&philo->fork_left);
+		pthread_mutex_lock(&info->print);
 		printf("%ld %d is sleeping\n", (gettime() - info->time_start), philo->id);
+		pthread_mutex_unlock(&info->print);
 		usleep_(info->sleep_time);
+		pthread_mutex_lock(&info->print);
 		printf("%ld %d is thinking\n", (gettime() - info->time_start), philo->id);
+		pthread_mutex_unlock(&info->print);
 	}
 	return (NULL);
 }
@@ -115,10 +145,9 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 		pthread_mutex_init(&philo[i].fork_left, NULL);
 		i++;
 	}
+	pthread_mutex_init(&info->print, NULL);
+	pthread_mutex_init(&info->time, NULL);
 	i = 0;
-	// printf("Le temps start UNIX en millisecondes est : %ld Ms\n", info->time_start);
-	// usleep_(500);
-	// printf("Le temps en millisecondes est entre le premier start et celui la est de : %ld Ms\n", (gettime() - info->time_start));
 	info->time_start = gettime();
 	while (i < philo->nb_philo)
 	{
