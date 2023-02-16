@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:32:40 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/14 11:55:10 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/16 02:24:29 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,12 +53,15 @@ typedef struct s_philo
 
 typedef struct s_info
 {
+	pthread_t		tid;
+	int				die;
 	int				nb_philo;
 	long int		time_start;
 	long int		limit_die;
 	long int		eat_time;
 	long int		sleep_time;
 	int				need_eat;
+	pthread_mutex_t	mutex_dead;
 	pthread_mutex_t	print;
 }	t_info;
 
@@ -68,4 +71,6 @@ int			ft_isdigit(int c, int param);
 int			ft_parsing(char **argv);
 int			usleep_(long int duration);
 long int	gettime(void);
+void		ft_print(t_philo *philo, char *str);
+int			check_die(void);
 #endif
