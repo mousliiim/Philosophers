@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:32:40 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/16 02:24:29 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/16 23:43:11 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,21 +27,6 @@
 # define INT_MIN -2147483648
 # define INT_MAX 2147483647
 
-typedef enum e_mode
-{
-	THINK,
-	EAT,
-	SLEEP,
-	DIE,
-	FORK,
-}	t_mode;
-
-typedef struct s_time
-{
-	long int	sec;
-	long int	usec;
-}	t_time;
-
 typedef struct s_philo
 {
 	int				id;
@@ -49,6 +34,7 @@ typedef struct s_philo
 	long int		last_eat;
 	pthread_mutex_t	fork_left;
 	pthread_mutex_t	*fork_right;
+	pthread_mutex_t	lock;
 }	t_philo;
 
 typedef struct s_info
@@ -63,6 +49,7 @@ typedef struct s_info
 	int				need_eat;
 	pthread_mutex_t	mutex_dead;
 	pthread_mutex_t	print;
+	pthread_mutex_t	shield;
 }	t_info;
 
 int			ft_atoi(const char *nptr);
@@ -71,6 +58,6 @@ int			ft_isdigit(int c, int param);
 int			ft_parsing(char **argv);
 int			usleep_(long int duration);
 long int	gettime(void);
-void		ft_print(t_philo *philo, char *str);
+int			ft_print(t_philo *philo, char *str);
 int			check_die(void);
 #endif

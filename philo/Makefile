@@ -9,12 +9,12 @@ PURPLE= \033[38;2;255;105;180m
 
 OBJS			=	${SRCS:.c=.o}
 
-CFLAGS			=	-Wall -Werror -Wextra -g3 -pthread
+CFLAGS			=	-Wall -Werror -Wextra -g3
 
 all				:	${NAME}
 
 .c.o	:
-		@cc ${CFLAGS} -c $< -o ${<:.c=.o}
+		@cc ${CFLAGS} ${IFLAGS} -c $< -o ${<:.c=.o}
 
 $(NAME) : $(OBJS)
 	@echo "\t\t\t${GREEN}========================${DEF_COLOR}"
@@ -23,7 +23,7 @@ $(NAME) : $(OBJS)
 	@echo "\t\t\t${GREEN}==============================${DEF_COLOR}"
 	@echo "\t\t\t${GREEN}==== ALL IS ${PURPLE}COMPILATED${DEF_COLOR} ✅${GREEN} ====${DEF_COLOR}"
 	@echo "\t\t\t${GREEN}==============================${DEF_COLOR}"
-	@cc $(OBJS) -o $(NAME)
+	@cc $(OBJS) -pthread -o $(NAME)
 
 
 clean			:

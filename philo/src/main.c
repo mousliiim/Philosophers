@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:30:57 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/16 03:57:39 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/17 02:00:11 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,45 +63,68 @@ int	check_die(void)
 	return (1);
 }
 
-void	ft_print(t_philo *philo, char *str)
+int	ft_print(t_philo *philo, char *str)
 {
 	t_info		*info;
 
+	if (!check_die() && str[0] != 'd')
+		return (0);
 	info = starton();
 	pthread_mutex_lock(&info->print);
 	printf("%ld %d %s", (gettime() - info->time_start), philo->id, str);
 	pthread_mutex_unlock(&info->print);
+	return (1);
 }
 
-void ft_eat(t_philo *philo)
+int	ft_eat(t_philo *philo)
 {
 	t_info		*info;
 
-	if (check_die() == 0)
-		return ;
+	if (!check_die())
+		return (0);
 	info = starton();
+	pthread_mutex_lock(&philo->lock);
 	philo->last_eat = gettime() - info->time_start;
+	pthread_mutex_unlock(&philo->lock);
 	ft_print(philo, "is eating\n");
 	usleep_(info->eat_time);
+	return (1);
 }
 
-void ft_sleep_and_think(t_philo *philo)
+int	ft_sleep_and_think(t_philo *philo)
 {
 	t_info		*info;
 
-	if (check_die() == 0)
-		return ;
+	if (!check_die())
+		return (0);
 	info = starton();
 	ft_print(philo, "is sleeping\n");
 	usleep_(info->sleep_time);
-	if (check_die() == 0)
-		return ;
 	ft_print(philo, "is thinking\n");
+	if (info->nb_philo % 2)
+	{
+		if (info->eat_time >= info->sleep_time)
+			usleep((info->eat_time - info->sleep_time) * 1000);
+		usleep(500);
+	}
+	return (1);
+}
+
+void take_fork(t_philo *philo)
+{
 	if (philo->id % 2)
 	{
-		if (info->eat_time > info->sleep_time)
-			usleep(info->eat_time - info->sleep_time);
-		usleep(500);
+		pthread_mutex_lock(philo->fork_right);
+		ft_print(philo, "has taken a fork\n");
+		pthread_mutex_lock(&philo->fork_left);
+		ft_print(philo, "has taken a fork\n");
+	}
+	else
+	{
+		pthread_mutex_lock(&philo->fork_left);
+		ft_print(philo, "has taken a fork\n");
+		pthread_mutex_lock(philo->fork_right);
+		ft_print(philo, "has taken a fork\n");
 	}
 }
 
@@ -114,36 +137,35 @@ void	*ft_routine(void *data)
 	philo = (t_philo *)data;
 	if (info->nb_philo == 1)
 	{
-		printf("%ld %d has taken a fork\n", (gettime() - info->time_start), philo->id);
+		ft_print(philo, "has taken a fork\n");
 		usleep_(info->limit_die);
-		printf("%ld %d died\n", (gettime() - info->time_start), philo->id);
+		ft_print(philo, "died\n");
 		return (NULL);
 	}
-	if (!(philo->id % 2))
-		usleep(info->eat_time * 100);
+	if (philo->id % 2)
+		usleep(info->eat_time * 1000);
 	while (check_die())
 	{
-		if (philo->id % 2)
-			pthread_mutex_lock(&philo->fork_left);
-		else
-			pthread_mutex_lock(philo->fork_right);
-		if (check_die() == 0)
-			return (NULL);
-		ft_print(philo, "has taken a fork\n");
-		if (philo->id % 2)
-			pthread_mutex_lock(philo->fork_right);
-		else
-			pthread_mutex_lock(&philo->fork_left);
-		if (check_die() == 0)
-			return (NULL);
-		ft_print(philo, "has taken a fork\n");
+		take_fork(philo);
 		ft_eat(philo);
 		pthread_mutex_unlock(&philo->fork_left);
 		pthread_mutex_unlock(philo->fork_right);
 		ft_sleep_and_think(philo);
 
 	}
-	return (NULL);
+	return ((void *)0x364364);
+}
+
+void dead_unlock(t_philo *philo, int i)
+{
+	t_info		*info;
+
+	info = starton();
+	pthread_mutex_unlock(&philo[i].lock);
+	pthread_mutex_lock(&info->mutex_dead);
+	info->die = 0;
+	pthread_mutex_unlock(&info->mutex_dead);
+	ft_print(&philo[i], "died\n");
 }
 
 int check_dead_philo(t_philo *philo)
@@ -152,22 +174,15 @@ int check_dead_philo(t_philo *philo)
 	int			i;
 
 	info = starton();
-	i = 0;
 	while (info->die)
 	{
-		i = 0;
-		while (i < info->nb_philo)
+		i = -1;
+		while (++i < info->nb_philo)
 		{
+			pthread_mutex_lock(&philo[i].lock);
 			if (gettime() - info->time_start - philo[i].last_eat >= info->limit_die)
-			{
-				pthread_mutex_lock(&info->mutex_dead);
-				info->die = 0;
-				if (info->nb_philo != 1)
-					ft_print(&philo[i], "died\n");
-				pthread_mutex_unlock(&info->mutex_dead);
-				return (0);
-			}
-			i++;
+				return (dead_unlock(philo, i), 0);
+			pthread_mutex_unlock(&philo[i].lock);
 		}
 		usleep(1000);
 	}
@@ -197,17 +212,19 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 	while (i < info->nb_philo)
 	{
 		philo[i].id = i + 1;
+		philo[i].last_eat = 0;
 		i++;
 	}
-	// ft_display(philo, info);
 	i = 0;
 	while (i < info->nb_philo)
 	{
 		pthread_mutex_init(&philo[i].fork_left, NULL);
+		pthread_mutex_init(&philo[i].lock, NULL);
 		i++;
 	}
-	pthread_mutex_init(&info->mutex_dead, NULL);
+	pthread_mutex_init(&info->shield, NULL);
 	pthread_mutex_init(&info->print, NULL);
+	pthread_mutex_init(&info->mutex_dead, NULL);
 	i = 0;
 	info->time_start = gettime();
 	while (i < info->nb_philo)
@@ -215,7 +232,8 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 		pthread_create(&philo[i].tid, NULL, ft_routine, &philo[i]);
 		i++;
 	}
-	check_dead_philo(philo);
+	if (info->nb_philo > 1)
+		check_dead_philo(philo);
 	i = 0;
 	while (i < info->nb_philo)
 	{
@@ -226,13 +244,14 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 	while (i < info->nb_philo)
 	{
 		pthread_mutex_destroy(&philo[i].fork_left);
-		pthread_mutex_destroy(&info->print);
 		i++;
 	}
-	// Comment savoir si le mutex est lock ou unlock ? sans utiliser mutex_trylock :
-	// pthread_mutex_t mutex;
-	// mutex.__data.__lock;
+	pthread_mutex_destroy(&info->shield);
+	pthread_mutex_destroy(&info->print);
+	pthread_mutex_destroy(&info->mutex_dead);
 }
+
+
 
 int	main(int argc, char **argv)
 {

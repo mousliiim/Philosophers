@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/09 19:54:21 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/16 02:52:00 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/17 00:01:15 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,18 @@ int	ft_parsing(char **argv)
 		}
 		while (argv[i][j])
 		{
+			if (ft_atoi(&argv[i][j]) == -42)
+			{
+				write(2, "Error: Need correct argument [Positif Number]!\n", 47);
+				return (0);
+			}
+			else
 			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j], 2) ||
 				(argv[i][0] == '+' && argv[i][1] == '\0') ||
 				(argv[i][0] == '+' && argv[i][1] == '+') ||
 				(argv[i][0] == '+' && ft_isdigit(argv[i][j], 1) &&
-				argv[i][j + 1] == '+') || (ft_isdigit(argv[i][0], 1) && argv[i][1] == '+'))
+				argv[i][j + 1] == '+') || (ft_isdigit(argv[i][0], 1) &&
+				argv[i][1] == '+'))
 			{
 				write(2, "Error: Need correct argument [Positif Number]!\n", 47);
 				return (0);
@@ -62,6 +69,8 @@ int	ft_atoi(const char *nptr)
 	while (*nptr >= '0' && *nptr <= '9')
 	{
 		result = result * 10 + *nptr - '0';
+		if ((result * sign) > INT_MAX || (result * sign) < INT_MIN)
+			return (-42);
 		nptr++;
 	}
 	return (result * sign);
