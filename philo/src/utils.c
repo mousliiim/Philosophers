@@ -6,51 +6,11 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/09 19:54:21 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/18 22:26:49 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/19 23:16:04 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosophers.h"
-
-int	ft_parsing(char **argv)
-{
-	int	i;
-	int	j;
-
-	i = 1;
-	while (argv[i])
-	{
-		j = 0;
-		if (argv[i][0] == '\0')
-		{
-			write(2, "Error: Argument not be empty !\n", 31);
-			return (0);
-		}
-		while (argv[i][j])
-		{
-			if (ft_atoi(&argv[i][j]) == -42)
-			{
-				write(2, "Error: Maximum number allowed is INT_MAX!\n", 42);
-				return (0);
-			}
-			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j], 2) ||
-				(argv[i][0] == '+' && argv[i][1] == '\0') ||
-				(argv[i][0] == '+' && argv[i][1] == '+') ||
-				(argv[i][0] == '+' && ft_isdigit(argv[i][j], 1) &&
-				argv[i][j + 1] == '+') || (ft_isdigit(argv[i][0], 1) &&
-				argv[i][1] == '+'))
-			{
-				write(2, "Error: Need correct argument !\n", 31);
-				return (0);
-			}
-			j++;
-		}
-		if (argv[i][j - 1] == '+')
-			return (0);
-		i++;
-	}
-	return (1);
-}
 
 int	ft_atoi(const char *nptr)
 {
@@ -77,25 +37,15 @@ int	ft_atoi(const char *nptr)
 	return (result * sign);
 }
 
-void	ft_display(t_philo *philo, t_info *info)
+void	ft_display(t_info *info)
 {
-	int	i;
-
-	i = 0;
 	printf("\n");
-	while (i < info->nb_philo)
-	{
-		printf("****************************\n");
-		printf("Philo Number for philo[%d] is : %d\n", i, philo[i].id);
-		printf("****************************\n\n");
-		i++;
-	}
 	printf("%s*******************************%s", BRED, END);
 	printf("\n\t%s   Info ⏱️:%s\n\n", BRED, END);
 	printf("%sNb of Philo : %d%s\n", BRED, info->nb_philo, END);
-	printf("%sLimit to Die : %ld Ms%s\n", BRED, info->limit_die, END);
-	printf("%sLimit to Eat : %ld Ms%s\n", BRED, info->eat_time, END);
-	printf("%sLimit Sleep Time : %ld Ms%s\n", BRED, info->sleep_time, END);
+	printf("%sLimit to Die : %d Ms%s\n", BRED, info->limit_die, END);
+	printf("%sLimit to Eat : %d Ms%s\n", BRED, info->eat_time, END);
+	printf("%sLimit Sleep Time : %d Ms%s\n", BRED, info->sleep_time, END);
 	printf("%sPhilo[s] need to eat : %d Time[s]%s\n", BRED, info->need_eat, END);
 	printf("%sFork total on the table : %d%s\n", BRED, info->nb_philo, END);
 	printf("%s\n*******************************\n%s", BRED, END);
