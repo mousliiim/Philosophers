@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:30:57 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/17 02:00:11 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/19 03:42:53 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ malloc
 free
 write
 usleep
-gettimeofday
+gettimeofday 
 pthread_create
 pthread_detach 
 pthread_join
@@ -67,10 +67,13 @@ int	ft_print(t_philo *philo, char *str)
 {
 	t_info		*info;
 
-	if (!check_die() && str[0] != 'd')
-		return (0);
 	info = starton();
 	pthread_mutex_lock(&info->print);
+	if (!check_die() && str[0] != 'd')
+	{
+		pthread_mutex_unlock(&info->print);
+		return (0);
+	}
 	printf("%ld %d %s", (gettime() - info->time_start), philo->id, str);
 	pthread_mutex_unlock(&info->print);
 	return (1);
@@ -86,6 +89,10 @@ int	ft_eat(t_philo *philo)
 	pthread_mutex_lock(&philo->lock);
 	philo->last_eat = gettime() - info->time_start;
 	pthread_mutex_unlock(&philo->lock);
+	pthread_mutex_lock(&philo->ceat);
+	if (philo->eat_count > 0)
+		philo->eat_count--;
+	pthread_mutex_unlock(&philo->ceat);
 	ft_print(philo, "is eating\n");
 	usleep_(info->eat_time);
 	return (1);
@@ -142,8 +149,10 @@ void	*ft_routine(void *data)
 		ft_print(philo, "died\n");
 		return (NULL);
 	}
-	if (philo->id % 2)
-		usleep(info->eat_time * 1000);
+	if (philo->id % 2 && info->nb_philo < 100)
+		usleep(info->eat_time * 500);
+	else if (philo->id % 2 && info->nb_philo >= 100)
+		usleep(info->eat_time * 800);
 	while (check_die())
 	{
 		take_fork(philo);
@@ -153,7 +162,7 @@ void	*ft_routine(void *data)
 		ft_sleep_and_think(philo);
 
 	}
-	return ((void *)0x364364);
+	return (NULL);
 }
 
 void dead_unlock(t_philo *philo, int i)
@@ -166,6 +175,32 @@ void dead_unlock(t_philo *philo, int i)
 	info->die = 0;
 	pthread_mutex_unlock(&info->mutex_dead);
 	ft_print(&philo[i], "died\n");
+
+}
+
+int check_philo_eat_count(t_philo *philo)
+{
+	t_info		*info;
+	int			i;
+	int			count;
+
+	info = starton();
+	i = -1;
+	count = 0;
+	while (++i < info->nb_philo)
+	{
+		pthread_mutex_lock(&philo[i].ceat);
+		if (philo[i].eat_count == 0)
+		{
+			pthread_mutex_lock(&info->shield);
+			count++;
+			pthread_mutex_unlock(&info->shield);
+		}
+		pthread_mutex_unlock(&philo[i].ceat);
+	}
+	if (count == info->nb_philo)
+		return (1);
+	return (0);
 }
 
 int check_dead_philo(t_philo *philo)
@@ -183,8 +218,14 @@ int check_dead_philo(t_philo *philo)
 			if (gettime() - info->time_start - philo[i].last_eat >= info->limit_die)
 				return (dead_unlock(philo, i), 0);
 			pthread_mutex_unlock(&philo[i].lock);
+			if (check_philo_eat_count(philo) == 1)
+			{
+				pthread_mutex_lock(&info->mutex_dead);
+				info->die = 0;
+				pthread_mutex_unlock(&info->mutex_dead);
+			}
 		}
-		usleep(1000);
+		usleep(2000);
 	}
 	return (0);
 }
@@ -213,15 +254,19 @@ void	ft_init_philo(t_philo *philo, t_info *info, char **argv, int argc)
 	{
 		philo[i].id = i + 1;
 		philo[i].last_eat = 0;
+		philo[i].eat_count = info->need_eat;
 		i++;
 	}
 	i = 0;
 	while (i < info->nb_philo)
 	{
+		pthread_mutex_init(&philo[i].ceat, NULL);
+		pthread_mutex_init(&philo[i].test, NULL);
 		pthread_mutex_init(&philo[i].fork_left, NULL);
 		pthread_mutex_init(&philo[i].lock, NULL);
 		i++;
 	}
+	pthread_mutex_init(&info->eat_count, NULL);
 	pthread_mutex_init(&info->shield, NULL);
 	pthread_mutex_init(&info->print, NULL);
 	pthread_mutex_init(&info->mutex_dead, NULL);
@@ -261,6 +306,11 @@ int	main(int argc, char **argv)
 	info = starton();
 	if (argc == 5 || argc == 6)
 	{
+		if (ft_atoi(argv[1]) < 0)
+		{
+			printf("Error : number of philo must be positive\n");
+			return (0);
+		}
 		philo = malloc(sizeof(t_philo) * ft_atoi(argv[1]));
 		if (!philo || !info)
 			return (0);

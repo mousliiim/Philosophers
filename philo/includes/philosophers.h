@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/06 09:32:40 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/16 23:43:11 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/19 03:27:48 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,12 @@ typedef struct s_philo
 	int				id;
 	pthread_t		tid;
 	long int		last_eat;
+	int				eat_count;
 	pthread_mutex_t	fork_left;
 	pthread_mutex_t	*fork_right;
 	pthread_mutex_t	lock;
+	pthread_mutex_t	ceat;
+	pthread_mutex_t test;
 }	t_philo;
 
 typedef struct s_info
@@ -47,9 +50,11 @@ typedef struct s_info
 	long int		eat_time;
 	long int		sleep_time;
 	int				need_eat;
+	int				eat_count_all;
 	pthread_mutex_t	mutex_dead;
 	pthread_mutex_t	print;
 	pthread_mutex_t	shield;
+	pthread_mutex_t	eat_count;
 }	t_info;
 
 int			ft_atoi(const char *nptr);
@@ -60,4 +65,5 @@ int			usleep_(long int duration);
 long int	gettime(void);
 int			ft_print(t_philo *philo, char *str);
 int			check_die(void);
+void		dead_unlock(t_philo *philo, int i);
 #endif

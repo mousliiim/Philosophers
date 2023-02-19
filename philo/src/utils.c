@@ -6,7 +6,7 @@
 /*   By: mmourdal <mmourdal@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/09 19:54:21 by mmourdal          #+#    #+#             */
-/*   Updated: 2023/02/17 00:01:15 by mmourdal         ###   ########.fr       */
+/*   Updated: 2023/02/18 22:26:49 by mmourdal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,9 @@ int	ft_parsing(char **argv)
 		{
 			if (ft_atoi(&argv[i][j]) == -42)
 			{
-				write(2, "Error: Need correct argument [Positif Number]!\n", 47);
+				write(2, "Error: Maximum number allowed is INT_MAX!\n", 42);
 				return (0);
 			}
-			else
 			if (ft_atoi(&argv[i][j]) < 0 || !ft_isdigit(argv[i][j], 2) ||
 				(argv[i][0] == '+' && argv[i][1] == '\0') ||
 				(argv[i][0] == '+' && argv[i][1] == '+') ||
@@ -41,11 +40,13 @@ int	ft_parsing(char **argv)
 				argv[i][j + 1] == '+') || (ft_isdigit(argv[i][0], 1) &&
 				argv[i][1] == '+'))
 			{
-				write(2, "Error: Need correct argument [Positif Number]!\n", 47);
+				write(2, "Error: Need correct argument !\n", 31);
 				return (0);
 			}
 			j++;
 		}
+		if (argv[i][j - 1] == '+')
+			return (0);
 		i++;
 	}
 	return (1);
